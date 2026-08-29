@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tina's Study Room</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tina Study">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#B03A6B">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/icon-192.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div class="wrap">
+<div class="flash" id="flash"></div><canvas id="confetti"></canvas>
+
+<section id="home">
+  <div class="tracks" role="tablist" aria-label="Study track"><button id="tk-nace" class="tk on" onclick="setTrack('nace')">NACE I</button><button id="tk-nclex" class="tk" onclick="setTrack('nclex')">NCLEX-RN</button></div>
+  <div class="eyebrow" id="track-eyebrow">NACE I · Foundations of Nursing</div>
+  <h1 id="greet">Hey Tina.</h1>
+  <div class="card note">You've got this, Tina. Every question you work through today is one less thing that can surprise you on exam day. I'm proud of how hard you're working — take it one question at a time, and I'll be right here cheering you on. Now go crush it.<span class="sig">— Chris</span></div>
+  <div class="count" id="count-card"><div class="n" id="days-left">–</div><div class="t"><b id="exam-label">Exam day</b><span id="exam-sub"></span></div><button class="btn ghost sm" onclick="go('settings')">Set date</button></div>
+  <div class="today" id="today"></div>
+  <div class="stats">
+    <div class="stat"><div class="v" id="s-streak">0</div><div class="l">Day streak</div></div>
+    <div class="stat"><div class="v" id="s-done">0</div><div class="l">Answered</div></div>
+    <div class="stat"><div class="v" id="s-acc">–</div><div class="l">Accuracy</div></div>
+  </div>
+  <div class="modes">
+    <button class="mode" onclick="go('drill')"><div class="ico">10</div><h3>Quick drill</h3><p>Ten questions on one topic with a rationale after each. Perfect between shifts.</p><div class="tag">5–8 min</div></button>
+    <button class="mode" onclick="startMock()"><div class="ico">50</div><h3>Timed mock exam</h3><p>Fifty questions, sixty minutes, scored at the end like the real thing.</p><div class="tag">60 min · <span id="mockcount">0</span> taken</div></button>
+    <button class="mode" onclick="go('voice')"><div class="ico">🎙</div><h3>Voice study</h3><p>I read each question out loud and you answer by speaking. Totally hands-free.</p><div class="tag">Hands-free</div></button>
+    <button class="mode" onclick="go('cards')"><div class="ico">⇄</div><h3>Flashcards</h3><p>Lab values, antidotes, drug facts, and isolation rules. Tap to flip.</p><div class="tag" id="cardcount"></div></button>
+    <button class="mode" onclick="go('dose')"><div class="ico">mL</div><h3>Dosage lab</h3><p>Endless fresh math problems with the work shown step by step.</p><div class="tag">Unlimited</div></button>
+    <button class="mode" onclick="go('game')"><div class="ico">⚡</div><h3>Lab Lightning</h3><p>Sixty seconds. Is that value high, low, or normal? Beat your best.</p><div class="tag">Best: <span id="best">0</span></div></button>
+    <button class="mode" onclick="startMissed()"><div class="ico">↻</div><h3>Fix my misses</h3><p>Re-try the questions you've gotten wrong until they stick.</p><div class="tag"><span id="misscount">0</span> to review</div></button>
+  </div>
+  <div class="nav"><button onclick="go('plan')">Study plan</button><button onclick="go('report')">Report card</button><button onclick="go('rewards')">Rewards from Chris</button><button onclick="go('sheets')">Cheat sheets</button><button onclick="go('install')">Add to Home Screen</button><button onclick="go('settings')">Settings</button></div>
+  <p class="tiny"><span id="bank-blurb">Unofficial practice content written to match the NLN NACE I blueprint — not actual exam items.</span> <span id="bankcount"></span> questions in the bank. Progress saves on this device.</p>
+</section>
+
+<section id="drill" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Pick a topic</h2>
+  <p class="muted">Your weakest topics are listed first.</p>
+  <div class="chips" id="topics"></div>
+</section>
+
+<section id="quiz" class="hidden">
+  <div class="top"><button class="home-link" onclick="confirmQuit()">← Quit</button><span class="mono" id="qtitle"></span></div>
+  <div class="bar"><span id="count"></span><span class="timer" id="timer"></span></div>
+  <div class="track"><i id="fill"></i></div>
+  <div class="card" style="margin-top:14px">
+    <div class="cat" id="cat"></div>
+    <div class="q" id="qtext"></div>
+    <div class="stem hidden" id="stem"></div>
+    <div class="opts" id="opts"></div>
+    <div class="why" id="why"><span class="cheer" id="cheer"></span><span id="expl"></span></div>
+    <div class="actions">
+      <button class="btn" id="check" onclick="check()" disabled>Check answer</button>
+      <button class="btn hidden" id="next" onclick="next()">Next</button>
+    </div>
+  </div>
+</section>
+
+<section id="result" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <div class="eyebrow" id="rtitle"></div>
+  <h1 id="rhead"></h1>
+  <div class="card" style="margin-top:14px">
+    <div class="score" id="pct"></div>
+    <div class="muted" id="raw"></div>
+    <div class="grid" id="bycat"></div>
+    <div class="review" id="review"></div>
+    <div class="actions"><button class="btn ghost" onclick="go('home')">Home</button><button class="btn" id="again">Go again</button></div>
+  </div>
+</section>
+
+<section id="voice" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button><span class="mono" id="vscore"></span></div>
+  <h2>Voice study</h2>
+  <div id="vsetup">
+    <p class="muted">I'll read each question and its choices out loud. Say your answer — just "B" works — and I'll tell you if you're right, then read the why. You can also say <b>repeat</b>, <b>choices</b>, <b>skip</b>, or <b>stop</b> at any time. Tapping an answer always works too.</p>
+    <div class="card" id="vsupport" style="margin-top:12px;display:none"></div>
+    <div class="toggle"><span>Reading speed</span><select id="vrate" class="date" onchange="setVoiceRate(this.value)"><option value="0.85">Relaxed</option><option value="1" selected>Normal</option><option value="1.15">Quick</option></select></div>
+    <h3 style="margin-top:16px">Pick a topic</h3>
+    <div class="chips" id="vtopics"></div>
+    <p class="tiny">Voice study uses single-answer questions. The first time you start, your browser will ask permission to use the microphone.</p>
+  </div>
+  <div id="vplay" class="hidden">
+    <div class="vorb" id="vorb"><div class="vring"></div><div class="vcore" id="vcore">🎙</div></div>
+    <div class="vstate mono" id="vstate"></div>
+    <div class="vheard" id="vheard"></div>
+    <div class="card" style="margin-top:14px">
+      <div class="cat" id="vcat"></div>
+      <div class="q" id="vqtext"></div>
+      <div class="opts" id="vopts"></div>
+      <div class="why" id="vwhy"><span class="cheer" id="vcheer"></span><span id="vexpl"></span></div>
+    </div>
+    <div class="actions" style="justify-content:center">
+      <button class="btn ghost sm" onclick="voiceRepeat()">Repeat</button>
+      <button class="btn ghost sm" onclick="voiceOptions()">Choices</button>
+      <button class="btn ghost sm" onclick="voiceSkip()">Skip</button>
+      <button class="btn sm" onclick="voiceEnd()">End session</button>
+    </div>
+  </div>
+</section>
+
+<section id="cards" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button><span class="mono" id="cpos"></span></div>
+  <h2>Flashcards</h2>
+  <div class="chips" id="decks"></div>
+  <div class="fc" id="fc" onclick="flipCard()"><div class="fcin"><div class="face"><div class="cat" id="cdeck"></div><div class="big" id="cfront"></div><div class="hint">Tap to flip</div></div><div class="face back"><div class="big" id="cback"></div></div></div></div>
+  <div class="actions" style="justify-content:center">
+    <button class="btn ghost" onclick="rate(false)">Still learning</button>
+    <button class="btn" onclick="rate(true)">Got it</button>
+  </div>
+  <p class="tiny" style="text-align:center">Cards you mark "still learning" come back sooner.</p>
+</section>
+
+<section id="dose" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button><span class="mono" id="dscore"></span></div>
+  <h2>Dosage lab</h2>
+  <div class="chips" id="dtypes"></div>
+  <div class="card" style="margin-top:14px">
+    <div class="cat" id="dkind"></div>
+    <div class="dose" id="dprob"></div>
+    <div class="inrow"><input class="num" id="dans" inputmode="decimal" placeholder="Answer"><span class="mono" id="dunit"></span><button class="btn" onclick="checkDose()" id="dcheck">Check</button><button class="btn ghost hidden" id="dnext" onclick="newDose()">Next problem</button></div>
+    <div class="why" id="dwhy"><span class="cheer" id="dcheer"></span><span id="dexpl"></span></div>
+    <div class="work hidden" id="dwork"></div>
+  </div>
+  <p class="tiny">Round mL to the nearest tenth (hundredth if under 1 mL), drops and mL/hr to the nearest whole number.</p>
+</section>
+
+<section id="game" class="hidden">
+  <div class="top"><button class="home-link" onclick="endGame(true)">← Home</button><span class="mono">Best: <span id="gbest">0</span></span></div>
+  <h2>Lab Lightning</h2>
+  <div id="gstart"><p class="muted">A lab value flashes up. Tap High, Low, or Normal as fast as you can. Sixty seconds, streaks multiply your points.</p><button class="btn" onclick="startGame()">Start</button></div>
+  <div id="gplay" class="hidden">
+    <div class="game-hud"><span>⏱ <span id="gtime">60</span>s</span><span>Streak <span id="gstreak">0</span></span><span>Score <span id="gscore">0</span></span></div>
+    <div class="track"><i id="gfill" style="width:100%"></i></div>
+    <div class="gq" id="gq"></div>
+    <div class="gbtns"><button class="gb low" onclick="gAnswer('low')">Low</button><button class="gb norm" onclick="gAnswer('normal')">Normal</button><button class="gb high" onclick="gAnswer('high')">High</button></div>
+    <p class="tiny" id="grange"></p>
+  </div>
+  <div id="gover" class="hidden card" style="margin-top:14px;text-align:center"><div class="eyebrow">Time!</div><div class="score" id="gfinal"></div><p id="gmsg"></p><div class="actions" style="justify-content:center"><button class="btn ghost" onclick="go('home')">Home</button><button class="btn" onclick="startGame()">Play again</button></div></div>
+</section>
+
+<section id="plan" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button><span class="mono" id="plan-pos"></span></div>
+  <h2>Your study plan</h2>
+  <p class="muted">Twenty weeks, one focus per week, a mock every few weeks, and review weeks built in. Check things off as you go — it's fine to move faster.</p>
+  <div id="weeks"></div>
+</section>
+<section id="report" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Report card</h2>
+  <p class="muted">A snapshot of this week. Tap share to send it to Chris.</p>
+  <div class="report" id="rep"></div>
+  <div class="actions"><button class="btn ghost" onclick="copyReport()">Copy text</button><button class="btn" onclick="shareReport()">Share</button></div>
+</section>
+<section id="rewards" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Rewards from Chris</h2>
+  <p class="muted">Hit a milestone and a note unlocks. No peeking — they're blurred until you earn them.</p>
+  <div id="rwlist"></div>
+</section>
+<section id="sheets" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Cheat sheets & mnemonics</h2>
+  <div id="sheetlist"></div>
+</section>
+<section id="install" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Put it on your Home Screen</h2>
+  <p class="muted">It'll open full-screen like a real app, with its own icon, and your progress stays saved.</p>
+  <div class="card" style="margin-top:14px"><h3>iPhone (Safari)</h3><div class="steps"><div>Open this link in <b>Safari</b> (not inside another app).</div><div>Tap the <b>Share</b> button — the square with the arrow at the bottom.</div><div>Scroll down and tap <b>Add to Home Screen</b>.</div><div>Tap <b>Add</b>. Look for the pink heart icon.</div></div></div>
+  <div class="card" style="margin-top:12px"><h3>Android (Chrome)</h3><div class="steps"><div>Open this link in <b>Chrome</b>.</div><div>Tap the <b>⋮</b> menu in the top right.</div><div>Tap <b>Add to Home screen</b> (or <b>Install app</b>), then <b>Add</b>.</div></div></div>
+  <p class="tiny">Progress is stored on this phone. Every week or so, go to Settings → Back up progress and text the code to Chris, so it can be restored on any device.</p>
+</section>
+<section id="settings" class="hidden">
+  <div class="top"><button class="home-link" onclick="go('home')">← Home</button></div>
+  <h2>Settings</h2>
+  <div class="card" style="margin-top:14px">
+    <div class="toggle"><span>Exam date</span><input class="date" type="date" id="examdate" onchange="setExam(this.value)"></div>
+    <div class="toggle"><span>Sounds</span><input type="checkbox" id="snd" onchange="S.sound=this.checked;save()"></div>
+    <div class="toggle"><span>Confetti & celebrations</span><input type="checkbox" id="cfx" onchange="S.fx=this.checked;save()"></div>
+    <div class="toggle"><span>Back up progress<br><small class="muted">Copy a code you can restore on any phone</small></span><button class="btn ghost sm" onclick="copyBackup()">Copy code</button></div>
+    <div class="toggle"><span>Restore from backup</span><button class="btn ghost sm" onclick="restoreBackup()">Restore</button></div>
+    <div class="toggle" style="border:none"><span>Reset all progress</span><button class="btn ghost sm" onclick="resetAll()">Reset</button></div>
+  </div>
+</section>
+</div>
+
+<script src="/bank.js"></script>
+<script src="/nclex-bank.js"></script>
+<script src="/tracks.js"></script>
+<script src="/app.js"></script>
+<script src="/features.js"></script>
+<script src="/track-ui.js"></script>
+<script src="/voice.js"></script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
+</body>
+</html>
