@@ -46,6 +46,16 @@ function renderPlan(){ const cur=weekIndex(); $('plan-pos').textContent=`Week ${
 function backupCode(){ return 'TINA1.'+btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
 function copyBackup(){ const c=backupCode(); const done=()=>flash('Backup copied — save it somewhere safe',true); if(navigator.share){ navigator.share({title:'Tina NACE backup',text:c}).then(done).catch(()=>{}); } else if(navigator.clipboard){ navigator.clipboard.writeText(c).then(done).catch(()=>prompt('Copy this backup code:',c)); } else prompt('Copy this backup code:',c); }
 function restoreBackup(){ const c=prompt('Paste your backup code:'); if(!c)return; try{ const j=JSON.parse(decodeURIComponent(escape(atob(c.trim().replace(/^TINA1\./,''))))); if(!j||typeof j.answered!=='number')throw 0; if(confirm(`Restore ${j.answered} answered questions and all progress? This replaces what's on this device.`)){ S=j; save(); location.reload(); } }catch(e){ alert("That code didn't work. Make sure you pasted the whole thing.") } }
+// A link like /#restore=TINA1.… restores a backup with one tap — no pasting.
+// The code rides in the URL fragment, which never leaves the device.
+function tryLinkRestore(){
+  const m=location.hash.match(/^#restore=(.+)$/); if(!m)return;
+  history.replaceState(null,'',location.pathname+location.search);
+  let j=null;
+  try{ const raw=decodeURIComponent(m[1]).replace(/\s+/g,'').replace(/^TINA1\./,''); j=JSON.parse(decodeURIComponent(escape(atob(raw)))); }catch(e){}
+  if(!j||typeof j.answered!=='number'){ alert("That restore link didn't work — ask Chris to send a fresh one."); return; }
+  if(confirm(`Restore ${j.answered} answered questions and all saved progress from this link? This replaces what's on this device.`)){ S=j; save(); location.reload(); }
+}
 function logDay(ok){ const t=today(); S.hist[t]=S.hist[t]||{t:0,c:0}; S.hist[t].t++; if(ok)S.hist[t].c++; }
 function weekStats(){ const out=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); const k=d.toISOString().slice(0,10); out.push({k,...(S.hist[k]||{t:0,c:0})}); } return out; }
 function reportText(){ const w=weekStats(); const t=w.reduce((a,b)=>a+b.t,0), c=w.reduce((a,b)=>a+b.c,0); const st=catStats(); const ranked=Object.entries(st).filter(([,v])=>v.t>=3).sort((a,b)=>(a[1].c/a[1].t)-(b[1].c/b[1].t));
@@ -136,3 +146,4 @@ function fanfare(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.25)
 function confetti(){ if(!S.fx||matchMedia('(prefers-reduced-motion: reduce)').matches)return; const c=$('confetti'), x=c.getContext('2d'); c.width=innerWidth; c.height=innerHeight; const cols=['#B03A6B','#EE7FA9','#3E4C8C','#F5C451','#6FD198']; const P=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,r:4+Math.random()*6,c:pick(cols),vy:2+Math.random()*3,vx:(Math.random()-.5)*2,a:Math.random()*6.3,va:(Math.random()-.5)*.3})); let t=0; (function f(){ x.clearRect(0,0,c.width,c.height); P.forEach(p=>{p.y+=p.vy;p.x+=p.vx;p.a+=p.va; x.save(); x.translate(p.x,p.y); x.rotate(p.a); x.fillStyle=p.c; x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); x.restore();}); if(++t<170)requestAnimationFrame(f); else x.clearRect(0,0,c.width,c.height); })(); }
 function resetAll(){ if(confirm('Erase all of Tina\'s progress on this device? This cannot be undone.')){ try{localStorage.removeItem(KEY)}catch(e){} location.reload(); } }
 renderHome();
+tryLinkRestore();
